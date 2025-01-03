@@ -5,7 +5,7 @@ import con from "../utils/db.js";
 
 router.get('/tasks', (req, res) => {
   const { employeeName } = req.query; // Use req.query to access query parameters
- console.log(req.query)
+ 
   
   const sql = "SELECT * FROM tasks WHERE employee_name = ?";
   
@@ -14,7 +14,7 @@ router.get('/tasks', (req, res) => {
       console.error('Error fetching tasks:', err);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
-   console.log(results)
+
     res.json(results);
   });
 });

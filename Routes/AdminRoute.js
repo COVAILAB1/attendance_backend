@@ -107,7 +107,7 @@ router.post('/add_employee', upload.single('image'), (req, res) => {
             return res.json({ Status: false, Error: err });
         }
 
-        console.log('Inserted into employee table:', result);
+ 
 
         // Second query: Insert employee name into another table (e.g., `employee_names`)
         const sqlInsertEmployeeName = `INSERT INTO leave_status (employee_name) VALUES (?)`;

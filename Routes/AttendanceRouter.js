@@ -88,7 +88,7 @@ router.get('/attendance/leave-approval-check', (req, res) => {
 
   router.post('/attendance/comp-approval-entry', (req, res) => {
     const { name, date, attendanceType } = req.body;
-    console.log(req.body);
+
   
     if (!name || !date || !attendanceType) {
       return res.status(400).json({ error: 'Missing required fields' });

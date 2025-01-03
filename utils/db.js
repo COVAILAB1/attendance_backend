@@ -18,46 +18,41 @@
 
 // export default con;
 
-
-
 import mysql from 'mysql';
 
-// Function to create a MySQL connection
-function createConnection() {
-    const con = mysql.createConnection({
-        host: "68.178.145.49",
-        user: "ATTENDANCE",
-        password: "KRISHtec@5747",
-        database: "employeems",
-        port: 3306,
-    });
+const con = mysql.createConnection({
+    host: "68.178.145.49",
+    user: "ATTENDANCE",
+    password: "KRISHtec@5747",
+    database: "employeems",
+    port: 3306,
+    connectTimeout: 10000 // Set a 10-second timeout for the connection
+});
 
-    // Connect to the database
+// Handle connection
+function handleConnection() {
     con.connect((err) => {
         if (err) {
             console.error("Connection error:", err.message);
-            setTimeout(createConnection, 5000); // Retry connection after 5 seconds
+            // Retry connection after a delay in case of failure
+            setTimeout(handleConnection, 5000);
         } else {
             console.log("Connected to the database");
         }
     });
-
+    
     // Handle connection errors
     con.on('error', (err) => {
-        console.error("Database error:", err.message);
-
-        if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ECONNRESET') {
-            console.log("Attempting to reconnect...");
-            setTimeout(createConnection, 5000); // Retry connection after 5 seconds
+        console.error("Database error:", err.code);
+        if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+            console.log("Reconnecting...");
+            handleConnection(); // Reconnect on connection loss
         } else {
-            throw err; // For other errors, re-throw to investigate further
+            throw err; // For other errors, let the application crash
         }
     });
-
-    return con;
 }
 
-// Initialize the connection
-const con = createConnection();
+handleConnection();
 
 export default con;
