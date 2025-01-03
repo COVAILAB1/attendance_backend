@@ -9,11 +9,14 @@ import { taskRouter } from "./Routes/taskRoutes.js";
 const app = express() 
 
 
-const corsOptions = { // Allow only your frontend domain
-  credentials: true, // Allow cookies and headers for authentication
-};
 
-app.use(cors(corsOptions));
+const corsOptions = {
+    origin: '*', // Allow all origins
+    credentials: false, // No credentials are needed
+  };
+  
+  app.use(cors(corsOptions));
+  app.options('*', cors(corsOptions)); // Allow preflight requests
 
 app.use(express.json())
 app.use(cookieParser())
