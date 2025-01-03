@@ -7,7 +7,7 @@ import cookieParser from "cookie-parser";
 import { AttendanceRouter } from './Routes/AttendanceRouter.js'
 import { taskRouter } from "./Routes/taskRoutes.js";
 const app = express() 
-const cors = require('cors');
+
 
 const corsOptions = {
   origin: 'https://attendance.krishtec.co.in', // Allow only your frontend domain
