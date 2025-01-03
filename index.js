@@ -15,7 +15,7 @@ app.use('/employee', EmployeeRouter)
 app.use('/employee', AttendanceRouter); 
 app.use('/employee',taskRouter)
 app.use(express.static('Public'))
-
+const port = process.env.PORT || 3000;
 const verifyUser = (req, res, next) => {
     const token = req.cookies.token;
     if(token) {
@@ -33,6 +33,6 @@ app.get('/verify',verifyUser, (req, res)=> {
     return res.json({Status: true, role: req.role, id: req.id})
 } )
 
-app.listen(3000, () => {
+app.listen(port, () => {
     console.log("Server is running")
 })
