@@ -9,8 +9,7 @@ import { taskRouter } from "./Routes/taskRoutes.js";
 const app = express() 
 
 
-const corsOptions = {
-  origin: 'https://attendance.krishtec.co.in', // Allow only your frontend domain
+const corsOptions = { // Allow only your frontend domain
   credentials: true, // Allow cookies and headers for authentication
 };
 
