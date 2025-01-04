@@ -20,7 +20,7 @@
 import mysql from 'mysql';
 
 const pool = mysql.createPool({
-    host: "68.178.145.49",
+    host: "68.178.156.164",
     user: "ATTENDANCE",
     password: "KRISHtec@5747",
     database: "employeems",
@@ -56,6 +56,7 @@ const con = {
         });
     },
 };
+
 
 // Export the connection object for use in other files
 export default con;
