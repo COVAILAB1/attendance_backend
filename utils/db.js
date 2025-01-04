@@ -16,7 +16,7 @@ con.connect(function(err) {
     }
 })
 
-// export default con;
+export default con;
 // import mysql from 'mysql';
 
 // const pool = mysql.createPool({
