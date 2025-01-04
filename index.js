@@ -70,7 +70,7 @@ const app = express();
 
 // CORS options with dynamic origin and credentials
 const corsOptions = {
-    origin: (origin, callback) => {
+       origin: (origin, callback) => {
         // Allow specific origins only
         if (origin === 'http://localhost:5173' || origin === 'https://attendance.krishtec.co.in') {
             callback(null, origin);  // Allow these origins
@@ -81,8 +81,10 @@ const corsOptions = {
     credentials: true,  // Allow sending cookies and authorization headers
 };
 
+
+
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));  // Handle preflight requests
+// Handle preflight requests
 
 app.use(express.json());
 app.use(cookieParser());
