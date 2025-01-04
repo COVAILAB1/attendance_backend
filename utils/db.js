@@ -16,12 +16,11 @@ function handleConnection() {
     if (err) {
       console.error("Connection error:", err.message);
       // Retry after 5 seconds if connection fails
-      setTimeout(handleConnection, 1000);
+      setTimeout(handleConnection, 5000);
     } else {
       console.log("Connected");
     }
   });
-
   // Handle connection errors
   con.on('error', function (err) {
     console.error("Database error:", err);
