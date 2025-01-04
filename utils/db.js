@@ -1,22 +1,45 @@
-import mysql from 'mysql'
+import mysql from 'mysql';
 
-const con = mysql.createConnection({
-    host: "68.178.156.164",
-    user: "ATTENDANCE",
-    password: "KRISHtec@5747",
-    database: "employeems",
-    port:3306
-})
+const config = {
+  host: "68.178.156.164",
+  user: "ATTENDANCE",
+  password: "KRISHtec@5747",
+  database: "employeems",
+  port: 3306,
+};
 
-con.connect(function(err) {
-    if(err) {
-        console.log("connection error",err.message)
+// Function to handle connection and retries
+function handleConnection() {
+  const con = mysql.createConnection(config);
+
+  con.connect(function (err) {
+    if (err) {
+      console.error("Connection error:", err.message);
+      // Retry after 5 seconds if connection fails
+      setTimeout(handleConnection, 1000);
     } else {
-        console.log("Connected")
+      console.log("Connected");
     }
-})
+  });
+
+  // Handle connection errors
+  con.on('error', function (err) {
+    console.error("Database error:", err);
+    if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ECONNRESET') {
+      console.log("Reconnecting...");
+      handleConnection(); // Reconnect on connection loss
+    } else {
+      throw err; // Unexpected errors
+    }
+  });
+
+  return con;
+}
+
+const con = handleConnection();
 
 export default con;
+
 // import mysql from 'mysql';
 
 // const pool = mysql.createPool({
