@@ -68,22 +68,9 @@ import cookieParser from "cookie-parser";
 
 const app = express();
 
-// CORS options with dynamic origin and credentials
-const corsOptions = {
-       origin: (origin, callback) => {
-        // Allow specific origins only
-        if (origin === 'http://localhost:5173' || origin === 'https://attendance.krishtec.co.in') {
-            callback(null, origin);  // Allow these origins
-        } else {
-            callback(new Error('Not allowed by CORS'), false);  // Reject other origins
-        }
-    },
-    credentials: true,  // Allow sending cookies and authorization headers
-};
 
 
-
-app.use(cors(corsOptions));
+app.use(cors());
 // Handle preflight requests
 
 app.use(express.json());
