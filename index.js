@@ -8,21 +8,18 @@ import { AttendanceRouter } from './Routes/AttendanceRouter.js';
 import { taskRouter } from "./Routes/taskRoutes.js";
 
 const app = express();
-
-// Configure CORS to allow requests from any origin
 app.use(cors({
-    origin: '*', // Allow any origin
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allowed HTTP methods
-    allowedHeaders: ['Content-Type', 'Authorization'], // Allowed headers
-}));
-
-// Handle preflight requests explicitly for OPTIONS method
-app.options('*', cors({
-    origin: '*', // Allow any origin
+    origin: '*', // Accept requests from any origin
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-}));
-
+    allowedHeaders: ['Content-Type'],
+  }));
+  
+  // Log the headers to check if CORS is applied properly
+  app.use((req, res, next) => {
+    console.log(req.headers.origin);  // Log the origin header
+    next();
+  });
+  
 
 app.use(express.json());
 app.use(cookieParser());
