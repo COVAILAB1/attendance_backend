@@ -8,12 +8,21 @@ import { AttendanceRouter } from './Routes/AttendanceRouter.js';
 import { taskRouter } from "./Routes/taskRoutes.js";
 
 const app = express();
+import cors from 'cors';
 
+// Configure CORS to allow requests from any origin
 app.use(cors({
-    origin: 'https://attendance.krishtec.co.in',
-    credentials: true, // Allows cookies
+    origin: '*', // Allow any origin
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allowed HTTP methods
+    allowedHeaders: ['Content-Type', 'Authorization'], // Allowed headers
 }));
 
+// Handle preflight requests explicitly for OPTIONS method
+app.options('*', cors({
+    origin: '*', // Allow any origin
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 
 app.use(express.json());
