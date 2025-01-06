@@ -9,8 +9,11 @@ import { taskRouter } from "./Routes/taskRoutes.js";
 
 const app = express();
 
+app.use(cors({
+    origin: 'https://attendance.krishtec.co.in',
+    credentials: true, // Allows cookies
+}));
 
-app.use(cors());
 
 
 app.use(express.json());
