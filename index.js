@@ -8,7 +8,6 @@ import { AttendanceRouter } from './Routes/AttendanceRouter.js';
 import { taskRouter } from "./Routes/taskRoutes.js";
 
 const app = express();
-import cors from 'cors';
 
 // Configure CORS to allow requests from any origin
 app.use(cors({
