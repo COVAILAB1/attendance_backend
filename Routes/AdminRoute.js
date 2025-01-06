@@ -85,20 +85,32 @@ const upload = multer({
     storage: storage
 })
 // end imag eupload 
+
 router.post('/add_employee', upload.single('image'), (req, res) => {
-    // First query: Insert into the `employee` table
+  
     const sqlInsertEmployee = `INSERT INTO employee 
-        (name, email, password, address, salary, image, position) 
+        (name, email, password, address, salary, image, position,gender,start_date,work_schedule,work_location,shift,dob,phone,employee_type,department) 
         VALUES (?)`;
 
     const values = [
-        req.body.name,
-        req.body.email,
-        req.body.password, // Ensure proper hashing for security in production
-        req.body.address,
-        req.body.salary,
-        req.file.filename,
-        req.body.position
+      req.body.name,
+      req.body.email,
+      req.body.password,
+      req.body.address,
+      req.body.salary,
+      req.file.filename,
+      req.body.position,
+      req.body.gender,
+      req.body.start_date,
+      req.body.work_policy,
+      req.body.work_location,
+      req.body.shift,
+      req.body.dob,
+      req.body.phone,
+      req.body.type,
+      req.body.dept,  
+     
+
     ];
 
     con.query(sqlInsertEmployee, [values], (err, result) => {
@@ -140,32 +152,55 @@ router.get('/employee/:id', (req, res) => {
     })
 })
 
-router.put('/edit_employee/:id', (req, res) => {
+router.put('/edit_employee/:id',(req, res) => {
     const id = req.params.id;
+   
     const sql = `UPDATE employee 
-        set name = ?, email = ?, salary = ?, address = ?, position = ? 
+        set name = ?, email = ?, salary = ?, address = ?,position = ? ,gender = ?,start_date = ?,work_schedule = ?,work_location = ?,shift= ?,dob= ?,phone= ?,employee_type= ?,department= ?
         Where id = ?`
     const values = [
-        req.body.name,
-        req.body.email,
-        req.body.salary,
-        req.body.address,
-        req.body.position
+      req.body.name,
+      req.body.email,
+      req.body.salary,
+      req.body.address,
+      req.body.position,
+      req.body.gender,
+      req.body.start_date,
+      req.body.work_policy,
+      req.body.work_location,
+      req.body.shift,
+      req.body.dob,
+      req.body.phone,
+      req.body.type,
+      req.body.dept,  
+     
     ]
     con.query(sql,[...values, id], (err, result) => {
         if(err) return res.json({Status: false, Error: "Query Error"+err})
         return res.json({Status: true, Result: result})
     })
 })
-
 router.delete('/delete_employee/:id', (req, res) => {
-    const id = req.params.id;
-    const sql = "delete from employee where id = ?"
-    con.query(sql,[id], (err, result) => {
-        if(err) return res.json({Status: false, Error: "Query Error"+err})
-        return res.json({Status: true, Result: result})
-    })
-})
+  const name = req.body.name; // Use `name` from the request parameters
+
+  // Delete from the `leave_status` table using the employee's name
+  const sqlDeleteLeaveStatus = "DELETE FROM leave_status WHERE employee_name = ?";
+  
+  con.query(sqlDeleteLeaveStatus, [name], (err, result) => {
+      if (err) {
+          return res.json({ Status: false, Error: "Error deleting from leave_status table: " + err });
+      }
+
+      // After deleting from leave_status, proceed with deleting from the `employee` table
+      const sqlDeleteEmployee = "DELETE FROM employee WHERE name = ?";
+      con.query(sqlDeleteEmployee, [name], (err, result) => {
+          if (err) {
+              return res.json({ Status: false, Error: "Error deleting from employee table: " + err });
+          }
+          return res.json({ Status: true, Message: 'Employee and related leave status deleted successfully' });
+      });
+  });
+});
 
 router.get('/admin_count', (req, res) => {
     const sql = "select count(id) as admin from admin";
@@ -233,64 +268,93 @@ router.get('/leave-status', (req, res) => {
         });
     });
 });
-
 router.post('/update-admin-leave-status', (req, res) => {
-    const { employeeName, leaves,leavePerMonth } = req.body;
+  const { employeeName, leaves, leavePerMonth } = req.body;
 
-    if (!employeeName || leaves === undefined || leaves === null) {
-        return res.status(400).json({ message: 'Employee name and leave count are required' });
-    }
+  if (!employeeName || leaves === undefined || leaves === null) {
+      return res.status(400).json({ message: 'Employee name and leave count are required' });
+  }
 
-    const leaveCount = parseFloat(leaves); // Ensure the leave count is treated as a float
-    if (isNaN(leaveCount) || leaveCount <= 0) {
-        return res.status(400).json({ message: 'Invalid leave count' });
-    }
+  const leaveCount = parseFloat(leaves); // Ensure the leave count is treated as a float
+  if (isNaN(leaveCount) || leaveCount <= 0) {
+      return res.status(400).json({ message: 'Invalid leave count' });
+  }
 
-    // Check if the employee already has leave assigned
-    const checkQuery = `
-        SELECT * FROM leave_status WHERE employee_name = ?
-    `;
+  console.log(`Employee: ${employeeName}, Leave Count: ${leaveCount}, Leave per Month: ${leavePerMonth}`);
 
-    con.query(checkQuery, [employeeName], (error, results) => {
-        if (error) {
-            console.error('Error checking leave status:', error);
-            return res.status(500).json({ message: 'Failed to check leave status' });
-        }
+  // Check if the employee already has leave assigned
+  const checkQuery = `
+      SELECT total_leaves, leave_per_month, available_leaves FROM leave_status WHERE employee_name = ?
+  `;
 
-        if (results.length === 0) {
-            // If employee doesn't have any leave record, assign total leaves
-            const insertQuery = `
-                INSERT INTO leave_status (employee_name, total_leaves, available_leaves,leave_per_month)
-                VALUES (?, ?, ?,?)
-            `;
+  con.query(checkQuery, [employeeName], (error, results) => {
+      if (error) {
+          console.error('Error checking leave status:', error);
+          return res.status(500).json({ message: 'Failed to check leave status' });
+      }
 
-            con.query(insertQuery, [employeeName, leaveCount, leaveCount,leavePerMonth], (error, results) => {
-                if (error) {
-                    console.error('Error inserting leave status:', error);
-                    return res.status(500).json({ message: 'Failed to assign leave status' });
-                }
 
-                return res.status(200).json({ success: true, message: 'Leave status assigned successfully' });
-            });
-        } else {
-            // If the employee already has a leave record, update only the total leaves (if necessary)
-            const updateQuery = `
-                UPDATE leave_status
-                SET total_leaves = ?,leave_per_month=?
-                WHERE employee_name = ?
-            `;
+      if (results.length > 0) {
+          const currentRecord = results[0];
+          const currentTotalLeaves = currentRecord.total_leaves;
+          const currentLeavePerMonth = currentRecord.leave_per_month;
+          const currentAvailableLeaves = currentRecord.available_leaves;
 
-            con.query(updateQuery, [leaveCount,leavePerMonth, employeeName], (error, results) => {
-                if (error) {
-                    console.error('Error updating leave status:', error);
-                    return res.status(500).json({ message: 'Failed to update leave status' });
-                }
+          if (currentTotalLeaves === 0 && currentLeavePerMonth === 0) {
+              // If employee doesn't have any leave record, assign total leaves
+              const updateQuery = `
+                  UPDATE leave_status
+                  SET total_leaves = ?, available_leaves = ?, leave_per_month = ?
+                  WHERE employee_name = ?
+              `;
 
-                return res.status(200).json({ success: true, message: 'Leave status updated successfully' });
-            });
-        }
-    });
+              con.query(updateQuery, [leaveCount, leaveCount, leavePerMonth, employeeName], (error, results) => {
+                  if (error) {
+                      console.error('Error inserting leave status:', error);
+                      return res.status(500).json({ message: 'Failed to assign leave status' });
+                  }
+
+                  return res.status(200).json({ success: true, message: 'Leave status assigned successfully' });
+              });
+          } else {
+              // If the employee already has a leave record, update the total leaves and leave per month
+              // Consider updating available_leaves as well if needed
+              const updatedAvailableLeaves = currentAvailableLeaves + (leaveCount - currentTotalLeaves);
+
+              const updateQuery = `
+                  UPDATE leave_status
+                  SET total_leaves = ?, leave_per_month = ?
+                  WHERE employee_name = ?
+              `;
+
+              con.query(updateQuery, [leaveCount, leavePerMonth, employeeName], (error, results) => {
+                  if (error) {
+                      console.error('Error updating leave status:', error);
+                      return res.status(500).json({ message: 'Failed to update leave status' });
+                  }
+
+                  return res.status(200).json({ success: true, message: 'Leave status updated successfully' });
+              });
+          }
+      } else {
+          // If no record exists for the employee, insert a new record
+          const insertQuery = `
+              INSERT INTO leave_status (employee_name, total_leaves, available_leaves, leave_per_month)
+              VALUES (?, ?, ?, ?)
+          `;
+
+          con.query(insertQuery, [employeeName, leaveCount, leaveCount, leavePerMonth], (error, results) => {
+              if (error) {
+                  console.error('Error inserting new leave status:', error);
+                  return res.status(500).json({ message: 'Failed to insert leave status' });
+              }
+
+              return res.status(200).json({ success: true, message: 'Leave status assigned successfully' });
+          });
+      }
+  });
 });
+
 router.get('/attendance_report/:name', (req, res) => {
     const { name } = req.params;
     const { startDate, endDate } = req.query;

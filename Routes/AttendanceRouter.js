@@ -53,37 +53,40 @@ router.post("/attendance/leave-approval-entry", (req, res) => {
 });
 
 router.get('/attendance/leave-approval-check', (req, res) => {
-    const { employeeName, date } = req.query;
+  const { employeeName, date } = req.query;
 
-    // Validate input
-    if (!employeeName || !date) {
-      return res.status(400).json({ error: 'Employee name and date are required' });
+  // Validate input
+  if (!employeeName || !date) {
+    return res.status(400).json({ error: 'Employee name and date are required' });
+  }
+
+  // SQL query to check if the date is within the range of start_date and end_date
+  const sql = `
+    SELECT status
+    FROM leaves
+    WHERE employee_name = ? 
+      AND ? BETWEEN start_date AND end_date 
+      AND status = "Approved"
+    LIMIT 1;
+  `;
+
+  // Execute query using con.query (MySQL)
+  con.query(sql, [employeeName, date], (err, result) => {
+    if (err) {
+      console.error('Error checking leave status:', err);
+      return res.status(500).json({ error: 'Internal server error' });
     }
-  
-    // SQL query to check leave approval for the given employee and date
-    const sql = `
-      SELECT status
-      FROM leaves
-      WHERE employee_name = ? AND start_date = ? AND status="Approved"
-      LIMIT 1;
-    `;
-  
-    // Execute query using con.query (MySQL)
-    con.query(sql, [employeeName, date], (err, result) => {
-      if (err) {
-        console.error('Error checking leave status:', err);
-        return res.status(500).json({ error: 'Internal server error' });
-      }
-  
-      if (result.length > 0) {
-        // Leave record found, send approval status
-        res.json({ approved: true });
-      } else {
-        // No leave record found
-        res.json({ approved: false, message: 'No leave   record found for today' });
-      }
-    });
+
+    if (result.length > 0) {
+      // Leave record found, send approval status
+      res.json({ approved: true });
+    } else {
+      // No leave record found
+      res.json({ approved: false, message: 'No leave record found for today' });
+    }
   });
+});
+
   
 
   router.post('/attendance/comp-approval-entry', (req, res) => {
