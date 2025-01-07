@@ -16,7 +16,7 @@ app.use(cors({
   
   // Log the headers to check if CORS is applied properly
   app.use((req, res, next) => {
-    console.log(req.headers.origin);  // Log the origin header
+    // console.log(req.headers.origin);  // Log the origin header
     next();
   });
   

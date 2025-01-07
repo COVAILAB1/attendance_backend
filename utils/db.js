@@ -43,7 +43,7 @@
 
 import mysql from 'mysql';
 
-// Configuration for the database
+
 const config = {
   host: "68.178.156.164",
   user: "ATTENDANCE",
@@ -61,12 +61,12 @@ const config = {
 //   user: "root",
 //   password: "",
 //   database: "employeems",
-//   // port: 3306,
-//   // connectionLimit: 10, // Limit for connection con
-//   // waitForConnections: true,
-//   // queueLimit: 0, // No query queue limit
-//   // connectTimeout: 10000, // 10 seconds timeout for initial connection
-//   // acquireTimeout: 10000, // 10 seconds timeout for acquiring a connection
+  // port: 3306,
+  // connectionLimit: 10, // Limit for connection con
+  // waitForConnections: true,
+  // queueLimit: 0, // No query queue limit
+  // connectTimeout: 10000, // 10 seconds timeout for initial connection
+  // acquireTimeout: 10000, // 10 seconds timeout for acquiring a connection
 // };
 // // Create a connection con
 const con = mysql.createPool(config);
@@ -95,15 +95,8 @@ function queryWithRetry(query, params, retries = 3) {
   });
 }
 
-// Example usage
-async function exampleUsage() {
-  try {
-    const results = await queryWithRetry("SELECT * FROM employee", []);
-    console.log("Query results:", results);
-  } catch (err) {
-    console.error("Error executing query:", err.message);
-  }
-}
+
+
 
 // Handle con errors
 con.on('error', (err) => {
@@ -116,7 +109,5 @@ con.on('error', (err) => {
   }
 });
 
-// // Call example usage
-// exampleUsage();
 
 export default con;

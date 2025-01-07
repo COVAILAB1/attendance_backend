@@ -16,16 +16,18 @@ const router = express.Router();
 //       return res.status(200).json({ message: "Attendance marked successfully" });
 //     });
 // });
+
 router.post("/attendance/login", (req, res) => {
   const { name, timeIn ,login_status,attendanceType} = req.body;
-
+  const currentDateIST = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+  const formattedDateIST = new Date(currentDateIST).toISOString().slice(0, 19).replace('T', ' ');
   // Insert or update the record with Time In
   const sql = `
-      INSERT INTO attendance (name, timein,login_status,status) 
-      VALUES (?, ?, ?,?)
-      ON DUPLICATE KEY UPDATE timein = VALUES(timein)
+      INSERT INTO attendance (name, timein,login_status,status,date) 
+      VALUES (?, ?, ?,?,?)
+      ON DUPLICATE KEY UPDATE timein = VALUES(timein), date = ?
   `;
-  con.query(sql, [name, timeIn,login_status,attendanceType], (err, result) => {
+  con.query(sql, [name, timeIn,login_status,attendanceType,formattedDateIST,formattedDateIST], (err, result) => {
       if (err) {
           console.error("Error logging Time In:", err);
           return res.status(500).json({ error: "Error logging Time In" });
@@ -35,15 +37,16 @@ router.post("/attendance/login", (req, res) => {
 });
 
 router.post("/attendance/leave-approval-entry", (req, res) => {
-  const { name,date,attendanceType} = req.body;
+  const { name,date,attendanceType,login_status} = req.body;
+  
 
   // Insert or update the record with Time In
   const sql = `
-      INSERT INTO attendance (name,status) 
-      VALUES (?, ?)
+      INSERT INTO attendance (name,date,status,login_status) 
+      VALUES (?, ?,?,?)
       
   `;
-  con.query(sql, [name,attendanceType], (err, result) => {
+  con.query(sql, [name,date,attendanceType,login_status], (err, result) => {
       if (err) {
           console.error("Error logging Time In:", err);
           return res.status(500).json({ error: "Error logging Time In" });
@@ -90,7 +93,7 @@ router.get('/attendance/leave-approval-check', (req, res) => {
   
 
   router.post('/attendance/comp-approval-entry', (req, res) => {
-    const { name, date, attendanceType } = req.body;
+    const { name, date, attendanceType,login_status } = req.body;
 
   
     if (!name || !date || !attendanceType) {
@@ -99,11 +102,11 @@ router.get('/attendance/leave-approval-check', (req, res) => {
   
     // Insert into attendancew table
     const insertAttendanceQuery = `
-      INSERT INTO attendance (name, status)
-      VALUES (?, ?)
+      INSERT INTO attendance (name,date,status,login_status)
+      VALUES (?, ?,?,?)
     `;
   
-    con.query(insertAttendanceQuery, [name, attendanceType], (err, attendanceResult) => {
+    con.query(insertAttendanceQuery, [name, date,attendanceType,login_status], (err, attendanceResult) => {
       if (err) {
         console.error('Error inserting into attendancew table:', err);
         return res.status(500).json({ error: 'Failed to insert into attendancew table' });

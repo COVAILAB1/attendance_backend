@@ -27,7 +27,7 @@ router.get('/attendance-status', async (req, res) => {
   const { employeeName } = req.query; // Use req.query to access query parameters
   const currentDate = new Date().toISOString().split('T')[0]; // Get current date in 'YYYY-MM-DD' format
 
-  const sql = "SELECT login_status,logout_status FROM attendance WHERE name = ? AND DATE(date) = ?";
+  const sql = "SELECT login_status,logout_status,status FROM attendance WHERE name = ? AND DATE(date) = ?";
 
   try {
     // Using Promises with con.query for async/await
@@ -46,10 +46,12 @@ router.get('/attendance-status', async (req, res) => {
     }
 
     const attendanceRecord = results[0];
+   
     const loginStatus = attendanceRecord.login_status== "true";
     const logoutStatus = attendanceRecord.logout_status== "true";
+    const status_type=attendanceRecord.status
 
-    res.status(200).json({ loginStatus, logoutStatus });
+    res.status(200).json({ loginStatus, logoutStatus,status_type});
   } catch (error) {
     console.error('Error fetching attendance status:', error);
     res.status(500).json({ message: 'Error fetching attendance status' });
@@ -334,17 +336,16 @@ router.post('/apply-leave', (req, res) => {
 
     // Check if the employee has sufficient leave balance
     if (availableLeaves < numOfDays) {
-      console.log("Insufficient leave balance");
       return res.status(400).json({ message: 'Insufficient leave balance' });
     }
 
     // Insert leave request into `leaves` table
     const insertQuery = `
-      INSERT INTO leaves (employee_name, leave_type, start_date, end_date, reason)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO leaves (employee_name, leave_type, start_date, end_date, reason,no_of_days)
+      VALUES (?, ?, ?, ?, ?,?)
     `;
 
-    con.query(insertQuery, [employeeName, leaveType, startDate, endDate, reason], (error) => {
+    con.query(insertQuery, [employeeName, leaveType, startDate, endDate, reason,numOfDays], (error) => {
       if (error) {
         console.error('Error applying leave:', error);
         return res.status(500).json({ message: 'Error applying for leave' });
@@ -386,6 +387,26 @@ router.get('/employee-leave-status', (req, res) => {
   });
 });
 
+
+router.get('/leave-counts', (req, res) => {
+  const { employeeName} = req.query;
+
+  const query = `
+         SELECT available_leaves, taken_leaves
+    FROM leave_status 
+    WHERE employee_name = ?
+
+ 
+  `;
+
+  con.query(query, [employeeName], (err, results) => {
+    if (err) {
+      console.error('Error fetching leave status:', err);
+      return res.status(500).json({ error: 'Failed to fetch leave status.' });
+    }
+    res.json(results);
+  });
+});
 
 router.get('/attendance-percentage-status', (req, res) => {
   const { employeeName } = req.query;
@@ -466,7 +487,7 @@ router.get("/leave-percentage", async (req, res) => {
       }
 
       if (results.length > 0) {
-        console.log(results)
+       
         const approvedLeaves = results[0].approved_leaves-1 || 0;
 
         // Step 2: Calculate leave percentage based on the approved leave days

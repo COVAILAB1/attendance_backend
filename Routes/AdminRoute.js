@@ -280,7 +280,7 @@ router.post('/update-admin-leave-status', (req, res) => {
       return res.status(400).json({ message: 'Invalid leave count' });
   }
 
-  console.log(`Employee: ${employeeName}, Leave Count: ${leaveCount}, Leave per Month: ${leavePerMonth}`);
+
 
   // Check if the employee already has leave assigned
   const checkQuery = `
@@ -380,7 +380,31 @@ router.get('/attendance_report/:name', (req, res) => {
       }
     });
   });
+  router.post('/leave-report', (req, res) => {
+    const { LeavestartDate, LeaveendDate, employeeName } = req.body;
+   
+
+    // SQL query to get leave records based on provided filters
+    let query = `
+        SELECT leave_type,start_date, end_date,reason,status,no_of_days from leaves
+        WHERE start_date >= ? AND end_date <= ? AND employee_name=?
+    `;
+
   
+    // Execute the query
+    con.query(query, [LeavestartDate, LeaveendDate,employeeName || ''], (err, results) => {
+        if (err) {
+            console.error('Error fetching leave data:', err);
+            return res.status(500).json({ error: 'Error fetching leave data' });
+        }
+
+        // Send the result as the response
+        return res.status(200).json({
+            Result:results
+        });
+    });
+});
+
 router.get('/request-leave-status', (req, res) => {
    
   
