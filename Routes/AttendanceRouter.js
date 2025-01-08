@@ -55,6 +55,37 @@ router.post("/attendance/leave-approval-entry", (req, res) => {
   });
 });
 
+
+// Route to handle On Duty submission
+router.post('/attendance/onduty', (req, res) => {
+  const { name,attendanceType, remarks } = req.body;
+
+  // Input validation
+  if (!name || !attendanceType || !remarks) {
+    return res.status(400).json({ message: 'All fields are required except date, which defaults to today.' });
+  }
+
+  // Get the current date in YYYY-MM-DD format
+  const currentDate = new Date().toISOString().split('T')[0];
+
+  // Insert query
+  const query = `
+    INSERT INTO attendance (name, date, status, remarks,login_status)
+    VALUES (?, ?, ?, ?,?)
+  `;
+  const values = [name, currentDate, attendanceType, remarks,"true"];
+
+  con.query(query, values, (err, result) => {
+    if (err) {
+      console.error('Error inserting On Duty entry:', err);
+      return res.status(500).json({ message: 'Internal server error.' });
+    }
+
+    res.status(200).json({ message: 'On Duty entry submitted successfully.' });
+  });
+});
+
+
 router.get('/attendance/leave-approval-check', (req, res) => {
   const { employeeName, date } = req.query;
 
@@ -93,7 +124,7 @@ router.get('/attendance/leave-approval-check', (req, res) => {
   
 
   router.post('/attendance/comp-approval-entry', (req, res) => {
-    const { name, date, attendanceType,login_status } = req.body;
+    const { name, date, attendanceType,login_status,remarks} = req.body;
 
   
     if (!name || !date || !attendanceType) {
@@ -102,11 +133,11 @@ router.get('/attendance/leave-approval-check', (req, res) => {
   
     // Insert into attendancew table
     const insertAttendanceQuery = `
-      INSERT INTO attendance (name,date,status,login_status)
-      VALUES (?, ?,?,?)
+      INSERT INTO attendance (name,date,status,login_status,remarks)
+      VALUES (?, ?,?,?,?)
     `;
   
-    con.query(insertAttendanceQuery, [name, date,attendanceType,login_status], (err, attendanceResult) => {
+    con.query(insertAttendanceQuery, [name, date,attendanceType,login_status,remarks], (err, attendanceResult) => {
       if (err) {
         console.error('Error inserting into attendancew table:', err);
         return res.status(500).json({ error: 'Failed to insert into attendancew table' });

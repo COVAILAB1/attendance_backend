@@ -54,19 +54,14 @@ const config = {
   waitForConnections: true,
   queueLimit: 0, // No query queue limit
   connectTimeout: 10000, // 10 seconds timeout for initial connection
-  acquireTimeout: 10000, // 10 seconds timeout for acquiring a connection
+ acquireTimeout: 10000, // 10 seconds timeout for acquiring a connection
 };
 // const config = {
 //   host: "localhost",
 //   user: "root",
 //   password: "",
 //   database: "employeems",
-  // port: 3306,
-  // connectionLimit: 10, // Limit for connection con
-  // waitForConnections: true,
-  // queueLimit: 0, // No query queue limit
-  // connectTimeout: 10000, // 10 seconds timeout for initial connection
-  // acquireTimeout: 10000, // 10 seconds timeout for acquiring a connection
+ 
 // };
 // // Create a connection con
 const con = mysql.createPool(config);

@@ -87,6 +87,7 @@ const upload = multer({
 // end imag eupload 
 
 router.post('/add_employee', upload.single('image'), (req, res) => {
+
   
     const sqlInsertEmployee = `INSERT INTO employee 
         (name, email, password, address, salary, image, position,gender,start_date,work_schedule,work_location,shift,dob,phone,employee_type,department) 
@@ -152,17 +153,18 @@ router.get('/employee/:id', (req, res) => {
     })
 })
 
-router.put('/edit_employee/:id',(req, res) => {
+router.put('/edit_employee/:id', upload.single('image'),(req, res) => {
     const id = req.params.id;
-   
+
     const sql = `UPDATE employee 
-        set name = ?, email = ?, salary = ?, address = ?,position = ? ,gender = ?,start_date = ?,work_schedule = ?,work_location = ?,shift= ?,dob= ?,phone= ?,employee_type= ?,department= ?
+        set name = ?, email = ?, salary = ?, address = ?,image=?,position = ? ,gender = ?,start_date = ?,work_schedule = ?,work_location = ?,shift= ?,dob= ?,phone= ?,employee_type= ?,department= ?
         Where id = ?`
     const values = [
       req.body.name,
       req.body.email,
       req.body.salary,
       req.body.address,
+      req.file.filename,
       req.body.position,
       req.body.gender,
       req.body.start_date,
@@ -180,6 +182,60 @@ router.put('/edit_employee/:id',(req, res) => {
         return res.json({Status: true, Result: result})
     })
 })
+router.post("/data_update", async (req, res) => {
+  const { field1, field2, field3, field4, field5, date } = req.body; // Destructure the data from the request
+
+  // Helper function to convert time in "HH.MM" format (e.g., "10.04") to MySQL's "HH:MM:00" format
+  const convertTo24HourFormat = (timeString) => {
+    const [hours, minutes] = timeString.split('.').map(num => parseInt(num, 10));
+
+    // Convert hours based on AM/PM (assuming input is based on 24-hour clock)
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
+  };
+
+  try {
+    // Convert field3 (timeIn) and field4 (timeOut) from "HH.MM" format to "HH:MM:00"
+    const timeIn = convertTo24HourFormat(field3);
+    const timeOut = convertTo24HourFormat(field4);
+    const login = "true";
+
+
+    // Insert into the attendance table
+    const insertQuery = `
+      INSERT INTO attendance (name, status, timeIn, timeOut, work_done, date,login_status) 
+      VALUES (?, ?, ?, ?, ?, ?,?)
+    `;
+    const attendanceValues = [field1, field2, timeIn, timeOut, field5, date,login];
+    
+    con.query(insertQuery, attendanceValues, (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: "Error inserting attendance data." });
+      }
+
+      // If status is LEAVE, update the leave status table
+      if (field2 === "LEAVE") {
+        const updateLeaveQuery = `
+          UPDATE leave_status 
+          SET available_leaves = available_leaves - 1, taken_leaves = taken_leaves + 1
+          WHERE employee_name = ?
+        `;
+        con.query(updateLeaveQuery, [field1], (err, results) => {
+          if (err) {
+            return res.status(500).json({ error: "Error updating leave status." });
+          }
+          res.status(200).json({ message: "Attendance and leave status updated successfully." });
+        });
+      } else {
+        res.status(200).json({ message: "Attendance updated successfully." });
+      }
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ error: "Server error." });
+  }
+});
+
+
 router.delete('/delete_employee/:id', (req, res) => {
   const name = req.body.name; // Use `name` from the request parameters
 
@@ -366,7 +422,7 @@ router.get('/attendance_report/:name', (req, res) => {
     }
   
     const query = `
-      SELECT date, timeIn, timeOut, status,work_done
+      SELECT date, timeIn, timeOut, status,work_done,remarks
       FROM attendance
       WHERE name = ? AND date BETWEEN ? AND ?
       ORDER BY date DESC
