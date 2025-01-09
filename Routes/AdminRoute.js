@@ -235,28 +235,45 @@ router.post("/data_update", async (req, res) => {
   }
 });
 
-
 router.delete('/delete_employee/:id', (req, res) => {
-  const name = req.body.name; // Use `name` from the request parameters
+  const name = req.body.name; // Use `name` from the request body
 
   // Delete from the `leave_status` table using the employee's name
   const sqlDeleteLeaveStatus = "DELETE FROM leave_status WHERE employee_name = ?";
-  
   con.query(sqlDeleteLeaveStatus, [name], (err, result) => {
+    if (err) {
+      return res.json({ Status: false, Error: "Error deleting from leave_status table: " + err });
+    }
+
+    // Delete from the `attendance` table using the employee's name
+    const sqlDeleteAttendance = "DELETE FROM attendance WHERE name = ?";
+    con.query(sqlDeleteAttendance, [name], (err, result) => {
       if (err) {
-          return res.json({ Status: false, Error: "Error deleting from leave_status table: " + err });
+        return res.json({ Status: false, Error: "Error deleting from attendance table: " + err });
       }
 
-      // After deleting from leave_status, proceed with deleting from the `employee` table
-      const sqlDeleteEmployee = "DELETE FROM employee WHERE name = ?";
-      con.query(sqlDeleteEmployee, [name], (err, result) => {
+      // Delete from the `leaves` table using the employee's name
+      const sqlDeleteLeaves = "DELETE FROM leaves WHERE employee_name = ?";
+      con.query(sqlDeleteLeaves, [name], (err, result) => {
+        if (err) {
+          return res.json({ Status: false, Error: "Error deleting from leaves table: " + err });
+        }
+
+        // Delete from the `employee` table using the employee's name
+        const sqlDeleteEmployee = "DELETE FROM employee WHERE name = ?";
+        con.query(sqlDeleteEmployee, [name], (err, result) => {
           if (err) {
-              return res.json({ Status: false, Error: "Error deleting from employee table: " + err });
+            return res.json({ Status: false, Error: "Error deleting from employee table: " + err });
           }
-          return res.json({ Status: true, Message: 'Employee and related leave status deleted successfully' });
+
+          // All deletions completed successfully
+          return res.json({ Status: true, Message: 'Employee and all related records deleted successfully' });
+        });
       });
+    });
   });
 });
+
 
 router.get('/admin_count', (req, res) => {
     const sql = "select count(id) as admin from admin";
