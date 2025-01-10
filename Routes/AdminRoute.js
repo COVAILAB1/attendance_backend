@@ -136,6 +136,7 @@ router.post('/add_employee', upload.single('image'), (req, res) => {
 });
 
 
+
 router.get('/employee', (req, res) => {
     const sql = "SELECT * FROM employee";
     con.query(sql, (err, result) => {
@@ -143,6 +144,8 @@ router.get('/employee', (req, res) => {
         return res.json({Status: true, Result: result})
     })
 })
+
+
 
 router.get('/employee/:id', (req, res) => {
     const id = req.params.id;
@@ -271,6 +274,36 @@ router.delete('/delete_employee/:id', (req, res) => {
         });
       });
     });
+  });
+});
+
+
+
+
+// Route to update expense status
+router.put("/update-expense-status/:expenseId", (req, res) => {
+  const { expenseId } = req.params;
+  const { status } = req.body;
+
+  // Validate input
+  if (!status) {
+    return res.status(400).json({ error: "Status is required." });
+  }
+
+  // Update query
+  const query = "UPDATE expenses SET status = ?,settled_on = NOW() WHERE id = ?";
+
+  con.query(query, [status, expenseId], (err, result) => {
+    if (err) {
+      console.error("Failed to update expense:", err);
+      return res.status(500).json({ error: "Failed to update expense." });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Expense not found." });
+    }
+
+    res.json({ message: "Expense status updated successfully." });
   });
 });
 

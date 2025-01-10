@@ -63,7 +63,7 @@ const config = {
 //   database: "employeems",
  
 // };
-// // Create a connection con
+// Create a connection con
 const con = mysql.createPool(config);
 
 // Function to handle queries with retries

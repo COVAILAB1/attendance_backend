@@ -508,7 +508,204 @@ router.get("/leave-percentage", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+router.post("/submit-expenses", (req, res) => {
+  const { expenses, name, totalAmount } = req.body;
 
+  if (!expenses || expenses.length === 0 || !name) {
+    return res.status(400).json({ error: "Incomplete data provided." });
+  }
+
+  const insertExpenseQuery = `
+    INSERT INTO expenses (employee_name, date, total_amount, status) 
+    VALUES (?, ?, ?, 'Not Paid');
+  `;
+
+  const date = expenses[0].date; // Assuming all entries share the same date
+
+  con.query(insertExpenseQuery, [name, date, totalAmount], (err, result) => {
+    if (err) {
+      console.error("Error inserting expense:", err.message);
+      return res.status(500).json({ error: "Failed to store expense data." });
+    }
+
+    const expenseId = result.insertId;
+    const expenseDetails = expenses.map((entry) => [name, expenseId, entry.purpose, entry.amount]);
+
+    const insertDetailsQuery = `
+      INSERT INTO expense_details (employee_name, expense_id, purpose, amount) 
+      VALUES ?;
+    `;
+
+    con.query(insertDetailsQuery, [expenseDetails], (err) => {
+      if (err) {
+        console.error("Error inserting expense details:", err.message);
+        return res.status(500).json({ error: "Failed to store expense details." });
+      }
+
+      res.status(200).json({ message: "Expenses stored successfully." });
+    });
+  });
+});
+
+
+router.get("/get-expenses", (req, res) => {
+  const query = `
+    SELECT 
+      e.id AS expense_id,
+      e.employee_name AS name,
+      e.date,
+      e.total_amount,
+      e.status,
+      d.purpose,
+      d.amount
+    FROM 
+      expenses e
+    JOIN 
+      expense_details d ON e.id = d.expense_id
+    WHERE 
+      e.status = 'Not Paid';
+  `;
+
+  con.query(query, (err, results) => {
+    if (err) {
+      console.error("Error fetching expenses:", err.message);
+      return res.status(500).json({ error: "Failed to retrieve expenses." });
+    }
+
+    const groupedResults = results.reduce((acc, row) => {
+      if (!acc[row.expense_id]) {
+        acc[row.expense_id] = {
+          expense_id: row.expense_id,
+          name: row.name,
+          date: row.date,
+          total_amount: row.total_amount,
+          status: row.status,
+          details: [],
+        };
+      }
+
+      acc[row.expense_id].details.push({
+        purpose: row.purpose,
+        amount: row.amount,
+      });
+
+      return acc;
+    }, {});
+
+    res.status(200).json(Object.values(groupedResults));
+  });
+});
+
+
+router.get("/get-expenses-employee", (req, res) => {
+  const name = req.query.name;  // Use query parameter
+
+
+  const query = `
+    SELECT 
+      e.id AS expense_id,
+      e.employee_name AS name,
+      e.date,
+      e.total_amount,
+      e.status,
+      d.purpose,
+      d.amount
+    FROM 
+      expenses e
+    JOIN 
+      expense_details d ON e.id = d.expense_id
+    WHERE 
+      e.status = 'Not Paid' AND e.employee_name = ?;
+  `;
+
+  con.query(query, [name], (err, results) => {
+    if (err) {
+      console.error("Error fetching expenses:", err.message);
+      return res.status(500).json({ error: "Failed to retrieve expenses." });
+    }
+
+    // Grouping results by expense_id to structure the response
+    const groupedResults = results.reduce((acc, row) => {
+      if (!acc[row.expense_id]) {
+        acc[row.expense_id] = {
+          expense_id: row.expense_id,
+          name: row.name,
+          date: row.date,
+          total_amount: row.total_amount,
+          status: row.status,
+          details: [],
+        };
+      }
+
+      // Push the details for each expense
+      acc[row.expense_id].details.push({
+        purpose: row.purpose,
+        amount: row.amount,
+      });
+
+      return acc;
+    }, {});
+
+    // Send the grouped results back as a response
+    res.status(200).json(Object.values(groupedResults));
+  });
+});
+
+router.get("/get-paid-expenses-employee", (req, res) => {
+  const name = req.query.name;  // Use query parameter
+
+
+  const query = `
+    SELECT 
+      e.id AS expense_id,
+      e.employee_name AS name,
+      e.date,
+      e.total_amount,
+      e.status,
+      e.settled_on,
+      d.purpose,
+      d.amount
+    FROM 
+      expenses e
+    JOIN 
+      expense_details d ON e.id = d.expense_id
+    WHERE 
+      e.status = 'Paid' AND e.employee_name = ?;
+  `;
+
+  con.query(query, [name], (err, results) => {
+    if (err) {
+      console.error("Error fetching expenses:", err.message);
+      return res.status(500).json({ error: "Failed to retrieve expenses." });
+    }
+
+    // Grouping results by expense_id to structure the response
+    const groupedResults = results.reduce((acc, row) => {
+      if (!acc[row.expense_id]) {
+        acc[row.expense_id] = {
+          expense_id: row.expense_id,
+          name: row.name,
+          date: row.date,
+          settled_on:row.settled_on,
+          total_amount: row.total_amount,
+          status: row.status,
+          details: [],
+        };
+      }
+
+      // Push the details for each expense
+      acc[row.expense_id].details.push({
+        purpose: row.purpose,
+        amount: row.amount,
+      });
+
+      return acc;
+    }, {});
+
+    // Send the grouped results back as a response
+    res.status(200).json(Object.values(groupedResults));
+  });
+});
 
   router.get('/detail/:id', (req, res) => {
     const id = req.params.id;
