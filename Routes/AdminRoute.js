@@ -350,7 +350,7 @@ router.get('/leave-status', (req, res) => {
         });
     }
 
-    const query = 'SELECT total_leaves, available_leaves,leave_per_month FROM leave_status WHERE employee_name = ?';
+    const query = 'SELECT total_leaves, available_leaves,leave_per_month,compensate_leaves FROM leave_status WHERE employee_name = ?';
 
     con.query(query, [employeeName], (err, results) => {
         if (err) {
